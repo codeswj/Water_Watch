@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Navbar from '@/components/shared/Navbar';
 import Sidebar from '@/components/shared/Sidebar';
 import Footer from '@/components/shared/Footer';
@@ -16,13 +16,15 @@ export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  const [stats, setStats]         = useState({ sources: 0, safe: 0, unsafe: 0, unknown: 0 });
+  const [stats, setStats]         = useState({ sources: 0, safe: 0, unsafe: 0, unknown: 0, pendingReports: 0, activeAlerts: 0 });
   const [alerts, setAlerts]       = useState([]);
-  const [reports, setReports]     = useState([]);
+  const [allReports, setAllReports]       = useState([]);
+  const [pendingReports, setPendingReports] = useState([]);
   const [readings, setReadings]   = useState([]);
   const [notices, setNotices]     = useState([]);
   const [loading, setLoading]     = useState(true);
   const [activeTab, setActiveTab] = useState('alerts');
+  const [reportFilter, setReportFilter] = useState('all');
 
   useEffect(() => {
     if (!authLoading && (!user || user.role === 'public')) {
@@ -33,23 +35,30 @@ export default function DashboardPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [sourcesRes, alertsRes, reportsRes, readingsRes, noticesRes] = await Promise.all([
+      const [sourcesRes, alertsRes, allReportsRes, readingsRes, noticesRes] = await Promise.all([
         waterSourcesAPI.getAll(),
         alertsAPI.getAll(),
-        reportsAPI.getAll({ status: 'pending' }),
+        reportsAPI.getAll(),          // load ALL reports
         sensorReadingsAPI.getAll({ limit: 20 }),
         notificationsAPI.getUnread(),
       ]);
 
-      const sources = sourcesRes.data.sources || [];
+      const sources    = sourcesRes.data.sources   || [];
+      const alertsList = alertsRes.data.alerts     || [];
+      const reportsList= allReportsRes.data.reports|| [];
+
       setStats({
-        sources: sources.length,
-        safe:    sources.filter((s) => s.status === 'safe').length,
-        unsafe:  sources.filter((s) => s.status === 'unsafe').length,
-        unknown: sources.filter((s) => s.status === 'unknown').length,
+        sources:        sources.length,
+        safe:           sources.filter((s) => s.status === 'safe').length,
+        unsafe:         sources.filter((s) => s.status === 'unsafe').length,
+        unknown:        sources.filter((s) => s.status === 'unknown').length,
+        pendingReports: reportsList.filter((r) => r.status === 'pending').length,
+        activeAlerts:   alertsList.length,
       });
-      setAlerts(alertsRes.data.alerts || []);
-      setReports(reportsRes.data.reports || []);
+
+      setAlerts(alertsList);
+      setAllReports(reportsList);
+      setPendingReports(reportsList.filter((r) => r.status === 'pending'));
       setReadings(readingsRes.data.readings || []);
       setNotices(noticesRes.data.notifications || []);
     } catch (err) {
@@ -62,6 +71,36 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user && user.role !== 'public') load();
   }, [user]);
+
+  // filtered reports based on selected filter tab
+  const filteredReports = reportFilter === 'all'
+    ? allReports
+    : allReports.filter((r) => r.status === reportFilter);
+
+  const isAdmin = user?.role === 'admin';
+
+  const availableTabs = useMemo(() => {
+    const base = [
+      { key: 'alerts', label: `🚨 Sensor Alerts (${alerts.length})` },
+      { key: 'readings', label: '📡 Sensor Readings' },
+    ];
+    if (isAdmin) {
+      base.unshift({ key: 'reports', label: `📝 Community Reports (${allReports.length})` });
+    }
+    return base;
+  }, [alerts.length, allReports.length, isAdmin]);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      setActiveTab(user.role === 'admin' ? 'reports' : 'alerts');
+    }
+  }, [authLoading, user]);
+
+  useEffect(() => {
+    if (availableTabs.length && !availableTabs.some((tab) => tab.key === activeTab)) {
+      setActiveTab(availableTabs[0].key);
+    }
+  }, [availableTabs, activeTab]);
 
   if (authLoading || loading) {
     return (
@@ -86,7 +125,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-              <p className="text-sm text-gray-500 mt-0.5">Welcome back, {user?.name}</p>
+              <p className="text-sm text-gray-500 mt-0.5">Welcome back, {user?.name} — <span className="capitalize">{user?.role?.replace('_', ' ')}</span></p>
             </div>
             {notices.length > 0 && (
               <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-2 text-sm font-medium">
@@ -96,20 +135,18 @@ export default function DashboardPage() {
           </div>
 
           {/* Stats Row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <StatsCard title="Total Sources"  value={stats.sources} icon="💧" color="sky"    />
-            <StatsCard title="Safe Sources"   value={stats.safe}    icon="✅" color="green"  />
-            <StatsCard title="Unsafe Sources" value={stats.unsafe}  icon="⚠️" color="red"    />
-            <StatsCard title="Unknown"        value={stats.unknown} icon="❓" color="yellow" />
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+            <StatsCard title="Total Sources"    value={stats.sources}        icon="💧" color="sky"    />
+            <StatsCard title="Safe"             value={stats.safe}           icon="✅" color="green"  />
+            <StatsCard title="Unsafe"           value={stats.unsafe}         icon="⚠️" color="red"    />
+            <StatsCard title="Unknown"          value={stats.unknown}        icon="❓" color="yellow" />
+            <StatsCard title="Pending Reports"  value={stats.pendingReports} icon="📝" color="yellow" />
+            <StatsCard title="Active Alerts"    value={stats.activeAlerts}   icon="🚨" color="red"    />
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-1 mb-5 bg-gray-100 rounded-xl p-1 w-fit">
-            {[
-              { key: 'alerts',   label: `🚨 Alerts (${alerts.length})` },
-              { key: 'reports',  label: `📝 Pending Reports (${reports.length})` },
-              { key: 'readings', label: '📡 Sensor Readings' },
-            ].map((tab) => (
+          {/* Main Tabs */}
+          <div className="flex gap-1 mb-5 bg-gray-100 rounded-xl p-1 w-fit flex-wrap">
+            {availableTabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
@@ -126,21 +163,53 @@ export default function DashboardPage() {
 
           {/* Tab Content */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+
+            {/* ── Community Reports Tab ── */}
+            {activeTab === 'reports' && (
+              <>
+                <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                  <h2 className="font-bold text-gray-700">Community Reports from Public Users</h2>
+                  {/* Report status filter */}
+                  <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+                    {['all', 'pending', 'verified', 'dismissed'].map((f) => (
+                      <button
+                        key={f}
+                        onClick={() => setReportFilter(f)}
+                        className={`px-3 py-1 rounded-md text-xs font-semibold transition capitalize ${
+                          reportFilter === f
+                            ? 'bg-white text-sky-600 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        {f === 'all' ? `All (${allReports.length})` :
+                         f === 'pending'   ? `Pending (${allReports.filter(r=>r.status==='pending').length})` :
+                         f === 'verified'  ? `Verified (${allReports.filter(r=>r.status==='verified').length})` :
+                         `Dismissed (${allReports.filter(r=>r.status==='dismissed').length})`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {filteredReports.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-8">No reports found.</p>
+                ) : (
+                  <ReportsQueue reports={filteredReports} onStatusChange={load} />
+                )}
+              </>
+            )}
+
+            {/* ── Sensor Alerts Tab ── */}
             {activeTab === 'alerts' && (
               <>
-                <h2 className="font-bold text-gray-700 mb-4">Active Alerts</h2>
+                <h2 className="font-bold text-gray-700 mb-1">Sensor-Triggered Alerts</h2>
+                <p className="text-xs text-gray-400 mb-4">These are auto-generated when IoT sensor readings exceed WHO safety thresholds.</p>
                 <AlertsPanel alerts={alerts} />
               </>
             )}
-            {activeTab === 'reports' && (
-              <>
-                <h2 className="font-bold text-gray-700 mb-4">Pending Community Reports</h2>
-                <ReportsQueue reports={reports} onStatusChange={load} />
-              </>
-            )}
+
+            {/* ── Sensor Readings Tab ── */}
             {activeTab === 'readings' && (
               <>
-                <h2 className="font-bold text-gray-700 mb-4">Latest Sensor Readings</h2>
+                <h2 className="font-bold text-gray-700 mb-1">Latest Sensor Readings</h2>
                 <p className="text-xs text-gray-400 mb-3">
                   <span className="text-green-600 font-semibold">Green</span> = within safe range &nbsp;|&nbsp;
                   <span className="text-red-600 font-semibold">Red</span> = exceeds threshold
