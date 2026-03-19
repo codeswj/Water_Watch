@@ -10,11 +10,13 @@ import ReportsQueue from '@/components/dashboard/ReportsQueue';
 import SensorReadingsTable from '@/components/dashboard/SensorReadingsTable';
 import { waterSourcesAPI, sensorReadingsAPI, reportsAPI, alertsAPI, notificationsAPI } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchTab = searchParams.get('tab');
 
   const [stats, setStats]         = useState({ sources: 0, safe: 0, unsafe: 0, unknown: 0, pendingReports: 0, activeAlerts: 0 });
   const [alerts, setAlerts]       = useState([]);
@@ -93,10 +95,21 @@ export default function DashboardPage() {
   }, [alerts.length, allReports.length, canViewReports]);
 
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && !searchTab) {
       setActiveTab(canViewReports ? 'reports' : 'alerts');
     }
-  }, [authLoading, user, canViewReports]);
+  }, [authLoading, user, canViewReports, searchTab]);
+
+  useEffect(() => {
+    if (searchTab && availableTabs.some((tab) => tab.key === searchTab) && searchTab !== activeTab) {
+      setActiveTab(searchTab);
+    }
+  }, [searchTab, availableTabs, activeTab]);
+
+  const handleTabSelect = (tabKey) => {
+    setActiveTab(tabKey);
+    router.replace(`/dashboard?tab=${tabKey}`, { scroll: false });
+  };
 
   useEffect(() => {
     if (availableTabs.length && !availableTabs.some((tab) => tab.key === activeTab)) {
@@ -151,7 +164,7 @@ export default function DashboardPage() {
             {availableTabs.map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => handleTabSelect(tab.key)}
                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
                   activeTab === tab.key
                     ? 'bg-white text-sky-600 shadow-sm'

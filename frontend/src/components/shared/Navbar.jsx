@@ -3,10 +3,15 @@
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
   const { user, logout, isAdmin, isFieldOfficer } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const roleLabel = pathname === '/admin' && user?.role === 'admin'
+    ? 'Field Officer'
+    : user?.role;
 
   return (
     <nav className="bg-sky-600 text-white shadow-md">
@@ -21,15 +26,14 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-            <Link href="/map" className="hover:text-sky-200 transition-colors">Map</Link>
-            {user && (
+            {!isAdmin && (
+              <Link href="/map" className="hover:text-sky-200 transition-colors">Map</Link>
+            )}
+            {user && !isAdmin && (
               <Link href="/report" className="hover:text-sky-200 transition-colors">Report Issue</Link>
             )}
-            {(isAdmin || isFieldOfficer) && (
+            {isFieldOfficer && (
               <Link href="/dashboard" className="hover:text-sky-200 transition-colors">Dashboard</Link>
-            )}
-            {isAdmin && (
-              <Link href="/admin" className="hover:text-sky-200 transition-colors">Admin</Link>
             )}
           </div>
 
@@ -38,7 +42,7 @@ export default function Navbar() {
             {user ? (
               <div className="flex items-center gap-3">
                 <span className="text-sky-100 text-sm">
-                  {user.name} <span className="text-sky-300">({user.role})</span>
+                  {user.name} <span className="text-sky-300">({roleLabel})</span>
                 </span>
                 <button
                   onClick={logout}
@@ -72,12 +76,11 @@ export default function Navbar() {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden bg-sky-700 px-4 pb-4 pt-2 flex flex-col gap-3 text-sm font-medium">
-          <Link href="/map" onClick={() => setMenuOpen(false)}>Map</Link>
-          {user && <Link href="/report" onClick={() => setMenuOpen(false)}>Report Issue</Link>}
-          {(isAdmin || isFieldOfficer) && (
+          {!isAdmin && <Link href="/map" onClick={() => setMenuOpen(false)}>Map</Link>}
+          {user && !isAdmin && <Link href="/report" onClick={() => setMenuOpen(false)}>Report Issue</Link>}
+          {isFieldOfficer && (
             <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
           )}
-          {isAdmin && <Link href="/admin" onClick={() => setMenuOpen(false)}>Admin</Link>}
           {user ? (
             <button onClick={logout} className="text-left text-red-300">Logout</button>
           ) : (

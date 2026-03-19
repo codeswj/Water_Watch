@@ -8,7 +8,7 @@ import UserManagement from '@/components/admin/UserManagement';
 import WaterSourceManager from '@/components/admin/WaterSourceManager';
 import AlertConfig from '@/components/admin/AlertConfig';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const TABS = [
   { key: 'users',   label: '👥 Users' },
@@ -18,14 +18,22 @@ const TABS = [
 
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
-  const router    = useRouter();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [tab, setTab] = useState('users');
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'admin')) {
       router.push('/dashboard');
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && TABS.some((t) => t.key === tabParam)) {
+      setTab(tabParam);
+    }
+  }, [searchParams]);
 
   if (authLoading) {
     return (
@@ -52,28 +60,31 @@ export default function AdminPage() {
             <p className="text-sm text-gray-500 mt-0.5">Manage users, water sources, and system alerts.</p>
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-1 mb-6 bg-gray-100 rounded-xl p-1 w-fit">
-            {TABS.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-                  tab === t.key
-                    ? 'bg-white text-sky-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
           {/* Tab content */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            {tab === 'users'   && <><h2 className="font-bold text-gray-700 mb-4">User Management</h2><UserManagement /></>}
-            {tab === 'sources' && <><h2 className="font-bold text-gray-700 mb-4">Water Source Management</h2><WaterSourceManager /></>}
-            {tab === 'alerts'  && <><h2 className="font-bold text-gray-700 mb-4">Alerts Overview</h2><AlertConfig /></>}
+            {tab === 'users' && (
+              <>
+                <h2 className="font-bold text-gray-700 mb-4">User Management</h2>
+                <UserManagement />
+              </>
+            )}
+            {tab === 'sources' && (
+              <>
+                <h2 className="font-bold text-gray-700 mb-4">Water Source Management</h2>
+                <WaterSourceManager />
+              </>
+            )}
+            {tab === 'alerts' && (
+              <>
+                <h2 className="font-bold text-gray-700 mb-4">Alerts Overview</h2>
+                <AlertConfig />
+              </>
+            )}
+            {!TABS.some((t) => t.key === tab) && (
+              <p className="text-sm text-gray-500">
+                Select an admin section from the sidebar dropdown to view its contents.
+              </p>
+            )}
           </div>
 
         </main>
