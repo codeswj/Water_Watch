@@ -78,23 +78,25 @@ export default function DashboardPage() {
     : allReports.filter((r) => r.status === reportFilter);
 
   const isAdmin = user?.role === 'admin';
+  const isFieldOfficer = user?.role === 'field_officer';
+  const canViewReports = isAdmin || isFieldOfficer;
 
   const availableTabs = useMemo(() => {
     const base = [
       { key: 'alerts', label: `🚨 Sensor Alerts (${alerts.length})` },
       { key: 'readings', label: '📡 Sensor Readings' },
     ];
-    if (isAdmin) {
+    if (canViewReports) {
       base.unshift({ key: 'reports', label: `📝 Community Reports (${allReports.length})` });
     }
     return base;
-  }, [alerts.length, allReports.length, isAdmin]);
+  }, [alerts.length, allReports.length, canViewReports]);
 
   useEffect(() => {
     if (!authLoading && user) {
-      setActiveTab(user.role === 'admin' ? 'reports' : 'alerts');
+      setActiveTab(canViewReports ? 'reports' : 'alerts');
     }
-  }, [authLoading, user]);
+  }, [authLoading, user, canViewReports]);
 
   useEffect(() => {
     if (availableTabs.length && !availableTabs.some((tab) => tab.key === activeTab)) {
