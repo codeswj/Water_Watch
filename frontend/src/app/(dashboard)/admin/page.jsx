@@ -7,14 +7,16 @@ import Footer from '@/components/shared/Footer';
 import UserManagement from '@/components/admin/UserManagement';
 import WaterSourceManager from '@/components/admin/WaterSourceManager';
 import AlertConfig from '@/components/admin/AlertConfig';
+import FeedbackManager from '@/components/admin/FeedbackManager';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { waterSourcesAPI, alertsAPI, reportsAPI } from '@/lib/api';
 
 const TABS = [
-  { key: 'users',   label: '👥 Users' },
-  { key: 'sources', label: '💧 Water Sources' },
-  { key: 'alerts',  label: '🚨 Alerts' },
+  { key: 'users',    label: '👥 Users' },
+  { key: 'sources',  label: '💧 Water Sources' },
+  { key: 'alerts',   label: '🚨 Alerts' },
+  { key: 'feedback', label: '📝 Feedback' },
 ];
 
 export default function AdminPage() {
@@ -144,34 +146,6 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-3">
-              <div className="lg:col-span-2 bg-gradient-to-br from-white to-sky-50 rounded-2xl border border-gray-100 shadow-sm p-4">
-                <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Total Profit (est.)</p>
-                <div className="flex items-center justify-between">
-                  <p className="text-3xl font-bold text-gray-900">$446.7K</p>
-                  <span className="text-xs text-green-600 font-semibold">▲ 24.4%</span>
-                </div>
-                <div className="h-32 mt-4 rounded-xl bg-white/60 border border-dashed border-gray-200 flex items-center justify-center text-gray-300 text-sm">
-                  Mini chart placeholder
-                </div>
-                <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-500">
-                  <span>Retailers: 2,884</span>
-                  <span>Distributors: 1,432</span>
-                  <span>Wholesalers: 562</span>
-                </div>
-              </div>
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
-                <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">Most active day</p>
-                  <p className="text-2xl font-semibold text-gray-900">Tue · 8,162</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">Repeat engagement</p>
-                  <p className="text-3xl font-bold text-green-600">68%</p>
-                  <p className="text-xs text-gray-500">On track for 80% target</p>
-                </div>
-              </div>
-            </div>
           </section>
 
           {/* Tab content */}
@@ -192,6 +166,12 @@ export default function AdminPage() {
               <>
                 <h2 className="font-bold text-gray-700 mb-4">Alerts Overview</h2>
                 <AlertConfig />
+              </>
+            )}
+            {tab === 'feedback' && (
+              <>
+                <h2 className="font-bold text-gray-700 mb-4">Community Feedback</h2>
+                <FeedbackManager />
               </>
             )}
             {!TABS.some((t) => t.key === tab) && (

@@ -91,4 +91,9 @@ export const alertsAPI = {
   delete:       (id)       => api.delete(`/alerts/${id}`),
 };
 
+export const feedbackAPI = {
+  getAll: (params) => api.get('/feedback', { params }),
+  create: (data) => api.post('/feedback', data),
+};
+
 export default api;

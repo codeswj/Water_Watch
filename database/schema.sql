@@ -73,6 +73,21 @@ CREATE INDEX IF NOT EXISTS idx_reports_water_source_id ON reports(water_source_i
 CREATE INDEX IF NOT EXISTS idx_reports_submitted_by    ON reports(submitted_by);
 CREATE INDEX IF NOT EXISTS idx_reports_status          ON reports(status);
 
+-- â”€â”€â”€ Feedback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+CREATE TABLE IF NOT EXISTS feedbacks (
+  id          SERIAL PRIMARY KEY,
+  report_id   INTEGER NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+  admin_id    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  message     TEXT NOT NULL,
+  visibility  VARCHAR(20) NOT NULL DEFAULT 'public'
+                CHECK (visibility IN ('public', 'internal')),
+  created_at  TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedbacks_report_id ON feedbacks(report_id);
+CREATE INDEX IF NOT EXISTS idx_feedbacks_admin_id ON feedbacks(admin_id);
+CREATE INDEX IF NOT EXISTS idx_feedbacks_visibility ON feedbacks(visibility);
+
 
 -- ─── Notifications ────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS notifications (
@@ -80,7 +95,7 @@ CREATE TABLE IF NOT EXISTS notifications (
   user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   message     TEXT NOT NULL,
   type        VARCHAR(20) NOT NULL DEFAULT 'push'
-                CHECK (type IN ('sms', 'email', 'push')),
+                CHECK (type IN ('sms', 'email', 'push', 'feedback')),
   is_read     BOOLEAN NOT NULL DEFAULT FALSE,
   created_at  TIMESTAMP NOT NULL DEFAULT NOW()
 );

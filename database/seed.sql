@@ -77,3 +77,9 @@ INSERT INTO notifications (user_id, message, type, is_read) VALUES
   (3, 'Alert [MEDIUM]: ph at Athi River Source is 9.5 (threshold: 8.5).', 'push', false),
   (1, 'New community report submitted for Athi River Source. Please review.', 'push', true)
 ON CONFLICT DO NOTHING;
+
+-- â”€â”€â”€ Feedback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+INSERT INTO feedbacks (report_id, admin_id, message, visibility) VALUES
+  (2, 1, 'Our team verified the turbidity spike on Nairobi River Point 3 and redirected the downstream intake until the discharge is contained.', 'public'),
+  (3, 1, 'Monitoring the Kiambu spring closely; please advise nearby residents to boil water until the lab tests clear the source.', 'internal')
+ON CONFLICT DO NOTHING;

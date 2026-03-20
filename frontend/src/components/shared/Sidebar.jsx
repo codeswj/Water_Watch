@@ -15,6 +15,7 @@ const adminTabs = [
   { key: 'users', label: '👥 Users' },
   { key: 'sources', label: '💧 Water Sources' },
   { key: 'alerts', label: '🚨 Alerts' },
+  { key: 'feedback', label: '📝 Feedback' },
 ];
 
 const dashboardTabs = [

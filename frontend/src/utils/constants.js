@@ -28,3 +28,5 @@ export const SEVERITY_COLORS = {
   medium: '#f97316',
   high:   '#ef4444',
 };
+
+export const FEEDBACK_VISIBILITIES = ['public', 'internal'];

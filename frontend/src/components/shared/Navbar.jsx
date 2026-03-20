@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
-  const { user, logout, isAdmin, isFieldOfficer } = useAuth();
+  const { user, logout, isAdmin, isFieldOfficer, isPublic } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const roleLabel = pathname === '/admin' && user?.role === 'admin'
@@ -31,6 +31,9 @@ export default function Navbar() {
             )}
             {user && !isAdmin && (
               <Link href="/report" className="hover:text-sky-200 transition-colors">Report Issue</Link>
+            )}
+            {isPublic && (
+              <Link href="/notifications" className="hover:text-sky-200 transition-colors">Notifications</Link>
             )}
             {isFieldOfficer && (
               <Link href="/dashboard" className="hover:text-sky-200 transition-colors">Dashboard</Link>
@@ -75,9 +78,10 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden bg-sky-700 px-4 pb-4 pt-2 flex flex-col gap-3 text-sm font-medium">
+          <div className="md:hidden bg-sky-700 px-4 pb-4 pt-2 flex flex-col gap-3 text-sm font-medium">
           {!isAdmin && <Link href="/map" onClick={() => setMenuOpen(false)}>Map</Link>}
           {user && !isAdmin && <Link href="/report" onClick={() => setMenuOpen(false)}>Report Issue</Link>}
+          {isPublic && <Link href="/notifications" onClick={() => setMenuOpen(false)}>Notifications</Link>}
           {isFieldOfficer && (
             <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
           )}
