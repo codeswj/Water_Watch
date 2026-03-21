@@ -54,17 +54,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="bg-sky-50 py-14 border-t border-sky-100">
-        <div className="max-w-2xl mx-auto text-center px-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-3">See a water problem in your area?</h2>
-          <p className="text-gray-500 mb-6">Register and submit a report. Every report helps protect your community.</p>
-          <Link href="/report" className="bg-sky-500 text-white px-8 py-3 rounded-xl font-bold hover:bg-sky-600 transition">
-            Report an Issue
-          </Link>
-        </div>
-      </section>
-
       <Footer />
     </div>
   );
