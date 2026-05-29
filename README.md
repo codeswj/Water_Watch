@@ -1,7 +1,6 @@
 # 💧 Water Source Mapping & Quality Reporting System
 
-**Student:** Shawn William Wafula | **Reg No:** BSCLMR149823
-**Supervisor:** Samuel Karuga | **Institution:** St. Paul's University | **July 2025**
+
 
 ---
 
